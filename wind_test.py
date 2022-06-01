@@ -106,9 +106,10 @@ class WindGrid_2D:
 #sample grid data for one height
 vgrd40m = dataset['vgrd40m'].vgrd40m[TIMESTAMP, lat_low:lat_high, lon_low:lon_high][0]
 ugrd40m = dataset['ugrd40m'].ugrd40m[TIMESTAMP, lat_low:lat_high, lon_low:lon_high][0]
-winddata1 = WindGrid(ugrd40m,vgrd40m,40)
+winddata1 = WindGrid_2D(ugrd40m,vgrd40m,40)
 
 
+#Test to check method
 print(winddata1.ugrid[0])
 winddata1.rand_gradient(ERR)
 print(winddata1.ugrid[0])
