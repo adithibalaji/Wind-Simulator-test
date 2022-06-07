@@ -15,6 +15,7 @@ LON_W = -128.5
 STD_NOW = 2.0
 STD_FORE = 3.2
 
+#Sample of heights at which we want data
 HEIGHTS = ['10m','20m','40m','60m']
 
 def rng(seed):
@@ -23,7 +24,7 @@ def rng(seed):
 
 def calc_array_size(lat_min,lat_max,lon_min,lon_max, res):
     #Function to calculate array size of output based on input coordinates and resolution
-    # Note that coordinates must be multiples of resolution
+    # Note that coordinates must be multiples of resolution (will update if needed later)
     latrange = abs(lat_max-lat_min)/res
     lonrange = abs(lon_max - lon_min)/res
     return [int(latrange), int(lonrange)]
@@ -65,6 +66,5 @@ class windGrid3D:
 
 
 #Sample grids for Vancouver Island coordinates for one level of wind
-#wind_now = windGrid2D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,STD_NOW,HEIGHTS)
 wind_fore = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,STD_FORE, HEIGHTS)
 wind_now = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,STD_NOW, HEIGHTS)
