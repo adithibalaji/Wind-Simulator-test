@@ -11,12 +11,13 @@ LAT_N = 50.75
 LON_E = -123.0
 LON_W = -128.5
 
-#Standard deviation of wind strength (set wider for forecast than nowcast)
-STD_NOW = 2.0
-STD_FORE = 3.2
+#Standard deviations of wind strengths (set wider for forecast than nowcast, with each further forecast having a wider standard deviation)
+stds = {'STD_NOW': 2.0}
+for x in range(29):
+    stds['STD_FORE_%02d' % x] = 2.05 + x*0.05
 
-#Sample of heights at which we want data
-HEIGHTS = ['10m','20m','40m','60m']
+
+HEIGHTS = ['850hPa', '700hPa', '500hPa', '300hPa', '200hPa']
 
 def rng(seed):
     #Initialize a random number generator based on seed
@@ -24,7 +25,7 @@ def rng(seed):
 
 def calc_array_size(lat_min,lat_max,lon_min,lon_max, res):
     #Function to calculate array size of output based on input coordinates and resolution
-    # Note that coordinates must be multiples of resolution (will update if needed later)
+    # Note that coordinates must be multiples of resolution
     latrange = abs(lat_max-lat_min)/res
     lonrange = abs(lon_max - lon_min)/res
     return [int(latrange), int(lonrange)]
@@ -65,6 +66,8 @@ class windGrid3D:
 
 
 
-#Sample grids for Vancouver Island coordinates for one level of wind
-wind_fore = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,STD_FORE, HEIGHTS)
-wind_now = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,STD_NOW, HEIGHTS)
+#Sample grids for Vancouver Island coordinates for wind during one time period
+wind_now = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['STD_NOW'], HEIGHTS)
+wind_fore_00 = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['STD_FORE_00'], HEIGHTS)
+wind_fore_01 = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['STD_FORE_01'], HEIGHTS)
+wind_fore_06 = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['STD_FORE_06'], HEIGHTS)
