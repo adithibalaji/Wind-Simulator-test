@@ -11,13 +11,21 @@ LAT_N = 50.75
 LON_E = -123.0
 LON_W = -128.5
 
+#Height of tropopause in hPa pressure altitude (approximate height for Vancouver Island lattitude) 
+TROPOPAUSE_HEIGHT = 264
+
+#Bias factors to change wind direction around tropopause. Currently set to NE under tropopause and SW above tropopause 
+#Use by setting u and v biases for winds under the tropopause (negative for west/south) and opposite will be applied to over the tropopause winds
+U_BIAS = 0.2
+V_BIAS = 0.2
+
 #Standard deviations of wind strengths (set wider for forecast than nowcast, with each further forecast having a wider standard deviation)
 stds = {'STD_NOW': 2.0}
 for x in range(29):
     stds['STD_FORE_%02d' % x] = 2.05 + x*0.05
 
-
-HEIGHTS = ['850hPa', '700hPa', '500hPa', '300hPa', '200hPa']
+#Alititudes (in hPa pressure heights) at which we want data. Equivalent to 5km-35km in increments of 2.5km
+HEIGHTS = [540, 382, 265, 177, 115, 72, 43, 24, 13, 6.2, 2.7, 0.97, 0.28]
 
 def rng(seed):
     #Initialize a random number generator based on seed
@@ -46,6 +54,16 @@ class windGrid2D:
     def __repr__(self):
         return f'u-grid: {self.ugrid}, v-grid: {self.vgrid}' 
 
+    def apply_bias_under(self):
+        #apply bias to winds under troposphere
+        self.ugrid = self.ugrid * U_BIAS
+        self.vgrid = self.vgrid * V_BIAS
+
+    def apply_bias_over(self):
+        #apply bias to winds over troposphere
+        self.ugrid = self.ugrid * (-U_BIAS)
+        self.vgrid = self.vgrid * (-V_BIAS)
+
 class windGrid3D:
     #Class containing  dictionnary of windGrid2D objects for each given height
     def __init__(self,lat_min,lat_max,lon_min,lon_max, res, std, heights):
@@ -53,6 +71,12 @@ class windGrid3D:
         seed = SEED
         for height in heights:
             self.altitudes[height] = windGrid2D(lat_min, lat_max, lon_min, lon_max, res, std)
+            #Apply biasing
+            if height <= TROPOPAUSE_HEIGHT:
+                self.altitudes[height].apply_bias_under()
+            else:
+                self.altitudes[height].apply_bias_over()
+                
             #Locally change seed value to get different values for each altitude's wind data
             #set to 2 and not 1 so there is no overlap between current level v-grid and next level u-grid
             seed += 2
@@ -71,3 +95,4 @@ wind_now = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['STD_NOW'], HEIGHT
 wind_fore_00 = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['STD_FORE_00'], HEIGHTS)
 wind_fore_01 = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['STD_FORE_01'], HEIGHTS)
 wind_fore_06 = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['STD_FORE_06'], HEIGHTS)
+
