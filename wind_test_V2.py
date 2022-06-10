@@ -2,6 +2,9 @@ import numpy as np
 
 #Seed number to be set as input for simulation 
 SEED = 1234
+def rng(seed):
+    #Initialize a random number generator based on seed
+    return  np.random.default_rng(seed)
 
 
 #Properties for map
@@ -14,22 +17,21 @@ LON_W = -128.5
 #Height of tropopause in hPa pressure altitude (approximate height for Vancouver Island lattitude) 
 TROPOPAUSE_HEIGHT = 264
 
-#Bias factors to change wind direction around tropopause. Currently set to NE under tropopause and SW above tropopause 
-#Use by setting u and v biases for winds under the tropopause (negative for west/south) and opposite will be applied to over the tropopause winds
-U_BIAS = 0.2
-V_BIAS = 0.2
 
 #Standard deviations of wind strengths (set wider for forecast than nowcast, with each further forecast having a wider standard deviation)
-stds = {'STD_NOW': 2.0}
-for x in range(29):
-    stds['STD_FORE_%02d' % x] = 2.05 + x*0.05
+BASE_STDEV = 2.0
+WINDSTDEV_INC_PER6HR = 0.05
+stds = {'NOWCAST_STDEV': BASE_STDEV}
 
-#Alititudes (in hPa pressure heights) at which we want data. Equivalent to 5km-35km in increments of 2.5km
-HEIGHTS = [540, 382, 265, 177, 115, 72, 43, 24, 13, 6.2, 2.7, 0.97, 0.28]
+for x in range(1,29):
+    stds['FORECAST_STDEV_%02d' % x] = BASE_STDEV + (x)*WINDSTDEV_INC_PER6HR
 
-def rng(seed):
-    #Initialize a random number generator based on seed
-    return  np.random.default_rng(seed)
+#Alititudes (in hPa pressure heights) at which we want data
+HEIGHTS = [600, 450, 300, 200, 150, 100, 50, 30, 15, 7]
+
+#Bias direction and strength to be applied in the positive direcion below toropopause and negative above the tropopause
+BIAS_DIRECTION = rng(SEED).integers(0,2*np.pi)
+BIAS_STRENGTH = 3.0
 
 def calc_array_size(lat_min,lat_max,lon_min,lon_max, res):
     #Function to calculate array size of output based on input coordinates and resolution
@@ -56,13 +58,13 @@ class windGrid2D:
 
     def apply_bias_under(self):
         #apply bias to winds under troposphere
-        self.ugrid = self.ugrid * U_BIAS
-        self.vgrid = self.vgrid * V_BIAS
+        self.ugrid += BIAS_STRENGTH*np.cos(BIAS_DIRECTION)
+        self.vgrid += BIAS_STRENGTH*np.sin(BIAS_DIRECTION)
 
     def apply_bias_over(self):
         #apply bias to winds over troposphere
-        self.ugrid = self.ugrid * (-U_BIAS)
-        self.vgrid = self.vgrid * (-V_BIAS)
+        self.ugrid -= BIAS_STRENGTH*np.cos(BIAS_DIRECTION)
+        self.vgrid -=  BIAS_STRENGTH*np.cos(BIAS_DIRECTION)
 
 class windGrid3D:
     #Class containing  dictionnary of windGrid2D objects for each given height
@@ -91,8 +93,8 @@ class windGrid3D:
 
 
 #Sample grids for Vancouver Island coordinates for wind during one time period
-wind_now = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['STD_NOW'], HEIGHTS)
-wind_fore_00 = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['STD_FORE_00'], HEIGHTS)
-wind_fore_01 = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['STD_FORE_01'], HEIGHTS)
-wind_fore_06 = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['STD_FORE_06'], HEIGHTS)
+wind_now = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['NOWCAST_STDEV'], HEIGHTS)
+wind_fore_01 = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['FORECAST_STDEV_01'], HEIGHTS)
+wind_fore_08 = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['FORECAST_STDEV_08'], HEIGHTS)
+wind_fore_26 = windGrid3D(LAT_S,LAT_N,LON_E,LON_W,RESOLUTION,stds['FORECAST_STDEV_26'], HEIGHTS)
 
